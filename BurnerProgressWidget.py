@@ -3,7 +3,7 @@ from PySide import QtCore
 import time
 import signal
 from subprocess import Popen, PIPE
-
+import os
 
 class BurnerProgressThread(QtCore.QThread):
     FLASH_STATE_WAIT_FOR_INSERT = 0
@@ -16,6 +16,7 @@ class BurnerProgressThread(QtCore.QThread):
         self.exiting = False
         self.deviceName = deviceName
         self.inputfile = inputfile
+        self.filesize = os.path.getsize(inputfile)
         self.flash_state = 1
     def drive_inserted(self):
         #TODO: error handling!, check preconditions
@@ -30,37 +31,39 @@ class BurnerProgressThread(QtCore.QThread):
                 print("wait for insert")
                 time.sleep(1)
             elif (self.flash_state == self.FLASH_STATE_FLASHING):
-                dd = Popen(['dd', 'of=' + self.deviceName, 'bs=1M', 'if=' + self.inputfile], stderr=PIPE)
+                english_env = dict(os.environ)
+                english_env['LANG'] = "LANG=en_US.UTF-8"
+                dd = Popen(['dd', 'of=' + self.deviceName, 'bs=1M', 'if=' + self.inputfile], stderr=PIPE, env=english_env)
                 while dd.poll() is None:
+                    print self.deviceName + ": wait for dd end"
                     time.sleep(1)
-                    print "in wait for dd end"
+                    print self.deviceName + ": wait for dd end"
                     dd.send_signal(signal.SIGUSR1)
+                    print self.deviceName + ": sent signal SIGUSR1 to dd"
                     while 1:
+                        print self.deviceName + ": in endless loop for reading stderr"
                         l = dd.stderr.readline()
-                        if 'records in' in l:
-                            print l[:l.index('+')], 'records',
                         if 'bytes' in l:
-                            print l.strip(), '\r',
+                            bytes_copied = l.split(' ')[0]
+                            print self.deviceName + ": " + str(bytes_copied) + " of " + str(self.filesize) + " bytes copied so far"
+                            self.dataReady.emit(50*int(bytes_copied)/self.filesize)
                             break
-
-                print("flashing - 0")
-                self.dataReady.emit(0)
-
+                
                 #run dd
                 #verification
                 #switch to next state
                 self.flash_state = self.FLASH_STATE_VERIFYING
             elif (self.flash_state == self.FLASH_STATE_VERIFYING):
                 time.sleep(1)
-                print("verifying - 60")
+                self.dataReady.emit(60)
                 time.sleep(1)
-                print("verifying - 70")
+                self.dataReady.emit(70)
                 time.sleep(1)
-                print("verifying - 80")
+                self.dataReady.emit(80)
                 time.sleep(1)
-                print("verifying - 90")
+                self.dataReady.emit(90)
                 time.sleep(1)
-                print("verifying - 100")
+                self.dataReady.emit(100)
                 self.flash_state = self.FLASH_STATE_WAIT_FOR_REMOVAL
             elif (self.flash_state == self.FLASH_STATE_WAIT_FOR_REMOVAL):
                 time.sleep(1)

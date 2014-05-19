@@ -31,11 +31,17 @@ class pyDiskBurner(QtGui.QWidget):
         self.inputfile = inputfile
         self.initUI()
 
-    def udisks_device_changed(self, deviceName, deviceSize):
+    def udisks_device_changed(self, devPath, deviceName, deviceSize):
         if(deviceSize == 0):
-            self.dev_list[deviceName]['burner'].drive_removed()
+            if (not self.dev_list[deviceName]['size'] == 0):
+              self.dev_list[deviceName]['burner'].drive_removed()
+              self.dev_list[deviceName]['size'] = 0
+              
         else:
-            self.dev_list[deviceName]['burner'].drive_inserted()
+            if (self.dev_list[deviceName]['size'] == 0):
+              self.dev_list[deviceName]['burner'].drive_inserted()
+              self.dev_list[deviceName]['size'] = deviceSize
+  
 
     def initUI(self):    
         self.burners = []
@@ -67,7 +73,7 @@ def on_device_changed(dev_path):
             print ("added " + deviceFile + " to the list of used devices")
     else:
         if (deviceFile in dev_list and not deviceIsPartition):
-            pdb.udisks_device_changed(dev_path, deviceSize)
+            pdb.udisks_device_changed(dev_path, deviceFile, deviceSize)
 
 
 raw_input("Connect all your card readers without SD cards inserted and press Enter to start the learning phase")
