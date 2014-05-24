@@ -14,19 +14,27 @@ class waitWindow(QtGui.QWidget):
     def __init__(self):
         super(waitWindow, self).__init__()
         self.initUI()
-    def initUI(self):    
-        self.setWindowTitle('waiting...')
+    def addDevice(self, name):
+        newItem = QtGui.QListWidgetItem()
+        newItem.setText(name)
+        self.list.insertItem(0, newItem)
 
-        hbox = QtGui.QHBoxLayout()
-        self.setLayout(hbox)
+    def initUI(self):    
+        description = QtGui.QLabel("Plug in your SD cards into the card readers now. Close this window when you plugged in all cards. Detected cards will be listed below:")
+        self.setWindowTitle('waiting...')
+        self.list = QtGui.QListWidget()
+        vbox = QtGui.QVBoxLayout()
+        vbox.addWidget(description)
+        vbox.addWidget(self.list)
+        self.setLayout(vbox)
         
 
-class pyDiskBurner(QtGui.QWidget):
+class pyCardBurner(QtGui.QWidget):
     
     def __init__(self, inputfile, dev_list):
-        ''' initializes the pyDiskBurner object
+        ''' initializes the pyCardBurner object
         number is the number of burner slots '''
-        super(pyDiskBurner, self).__init__()
+        super(pyCardBurner, self).__init__()
         self.dev_list = dev_list
         self.inputfile = inputfile
         self.initUI()
@@ -45,7 +53,7 @@ class pyDiskBurner(QtGui.QWidget):
 
     def initUI(self):    
         self.burners = []
-        self.setWindowTitle('pyDiskBurner')
+        self.setWindowTitle('pyCardBurner')
 
         hbox = QtGui.QHBoxLayout()
         index = 0
@@ -71,6 +79,7 @@ def on_device_changed(dev_path):
         if (deviceFile in dev_list and not deviceIsPartition and int(deviceSize) > 0 and dev_list[deviceFile]['size'] == 0):
             dev_list[deviceFile]['size'] = deviceSize
             print ("added " + deviceFile + " to the list of used devices")
+            waitwindow.addDevice(deviceFile)
     else:
         if (deviceFile in dev_list and not deviceIsPartition):
             pdb.udisks_device_changed(dev_path, deviceFile, deviceSize)
@@ -109,6 +118,6 @@ for dev, val in dev_list.items():
 
 inputfile = str(sys.argv[1])
 
-pdb = pyDiskBurner(inputfile, dev_list)
+pdb = pyCardBurner(inputfile, dev_list)
 pdb.show()
 sys.exit(app.exec_())

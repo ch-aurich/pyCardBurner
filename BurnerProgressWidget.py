@@ -11,6 +11,7 @@ class BurnerProgressThread(QtCore.QThread):
     FLASH_STATE_VERIFYING = 2
     FLASH_STATE_WAIT_FOR_REMOVAL = 3
     dataReady = QtCore.Signal(int)
+    state     = QtCore.Signal(str)
     def __init__(self, deviceName, inputfile):
         QtCore.QThread.__init__(self)
         self.exiting = False
@@ -29,11 +30,14 @@ class BurnerProgressThread(QtCore.QThread):
             #wait for card to be inserted
             if (self.flash_state == self.FLASH_STATE_WAIT_FOR_INSERT):
                 print("wait for insert")
+                self.state.emit("wait for card insert")
+                self.dataReady.emit(0)
                 time.sleep(1)
             elif (self.flash_state == self.FLASH_STATE_FLASHING):
+                self.state.emit("flashing...")
                 english_env = dict(os.environ)
                 english_env['LANG'] = "LANG=en_US.UTF-8"
-                dd = Popen(['dd', 'of=' + self.deviceName, 'bs=1M', 'if=' + self.inputfile], stderr=PIPE, env=english_env)
+                dd = Popen(['dd', 'of=' + self.deviceName, 'bs=1M', 'oflag=direct', 'if=' + self.inputfile], stderr=PIPE, env=english_env)
                 while dd.poll() is None:
                     print self.deviceName + ": wait for dd end"
                     time.sleep(1)
@@ -41,31 +45,25 @@ class BurnerProgressThread(QtCore.QThread):
                     dd.send_signal(signal.SIGUSR1)
                     print self.deviceName + ": sent signal SIGUSR1 to dd"
                     while 1:
+                        time.sleep(.1)
                         print self.deviceName + ": in endless loop for reading stderr"
                         l = dd.stderr.readline()
+                        print self.deviceName + l
                         if 'bytes' in l:
                             bytes_copied = l.split(' ')[0]
                             print self.deviceName + ": " + str(bytes_copied) + " of " + str(self.filesize) + " bytes copied so far"
-                            self.dataReady.emit(50*int(bytes_copied)/self.filesize)
+                            self.dataReady.emit(100*int(bytes_copied)/self.filesize)
                             break
                 
-                #run dd
-                #verification
                 #switch to next state
-                self.flash_state = self.FLASH_STATE_VERIFYING
-            elif (self.flash_state == self.FLASH_STATE_VERIFYING):
-                time.sleep(1)
-                self.dataReady.emit(60)
-                time.sleep(1)
-                self.dataReady.emit(70)
-                time.sleep(1)
-                self.dataReady.emit(80)
-                time.sleep(1)
-                self.dataReady.emit(90)
-                time.sleep(1)
-                self.dataReady.emit(100)
+                #self.flash_state = self.FLASH_STATE_VERIFYING
                 self.flash_state = self.FLASH_STATE_WAIT_FOR_REMOVAL
+            #elif (self.flash_state == self.FLASH_STATE_VERIFYING):
+            #    time.sleep(1)
+            #    self.dataReady.emit(60)
+            #    self.flash_state = self.FLASH_STATE_WAIT_FOR_REMOVAL
             elif (self.flash_state == self.FLASH_STATE_WAIT_FOR_REMOVAL):
+                self.state.emit("wait for card removal")
                 time.sleep(1)
 
 
@@ -78,6 +76,7 @@ class BurnerProgressWidget(QtGui.QWidget):
 
         self.thread = BurnerProgressThread(self.deviceName, self.inputfile)
         self.thread.dataReady.connect(self.setProgress, QtCore.Qt.QueuedConnection)
+        self.thread.state.connect(self.setState, QtCore.Qt.QueuedConnection)
         self.thread.start()
     def drive_inserted(self):
         self.thread.drive_inserted()
@@ -86,6 +85,9 @@ class BurnerProgressWidget(QtGui.QWidget):
     def setProgress(self,progress):
         print "setting progress"
         self.progress.setValue(progress)
+    def setState(self, state):
+        print "setting state"
+        self.actionLabel.setText(state)
     def initUI(self, deviceName):
         deviceNameDescriptionLabel = QtGui.QLabel("Device:")
         self.deviceNameLabel = QtGui.QLabel(deviceName)
