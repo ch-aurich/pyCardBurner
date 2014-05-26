@@ -5,6 +5,35 @@ import signal
 from subprocess import Popen, PIPE
 import os
 
+DEFAULT_STYLE = """
+QProgressBar{
+    border: 2px solid grey;
+    border-radius: 5px;
+    text-align: center
+}
+
+QProgressBar::chunk {
+    background-color: blue;
+    width: 1px;
+    margin: 0px;
+}
+"""
+
+COMPLETED_STYLE = """
+QProgressBar{
+    border: 2px solid grey;
+    border-radius: 5px;
+    text-align: center
+}
+
+QProgressBar::chunk {
+    background-color: green;
+    width: 1px;
+    margin: 0px;
+}
+"""
+
+
 class BurnerProgressThread(QtCore.QThread):
     FLASH_STATE_WAIT_FOR_INSERT = 0
     FLASH_STATE_FLASHING = 1
@@ -52,11 +81,12 @@ class BurnerProgressThread(QtCore.QThread):
                         if 'bytes' in l:
                             bytes_copied = l.split(' ')[0]
                             print self.deviceName + ": " + str(bytes_copied) + " of " + str(self.filesize) + " bytes copied so far"
-                            self.dataReady.emit(100*int(bytes_copied)/self.filesize)
+                            self.dataReady.emit(99*int(bytes_copied)/self.filesize) #this will reach 99% as maximum
                             break
                 
                 #switch to next state
                 #self.flash_state = self.FLASH_STATE_VERIFYING
+                self.dataReady.emit(100)
                 self.flash_state = self.FLASH_STATE_WAIT_FOR_REMOVAL
             #elif (self.flash_state == self.FLASH_STATE_VERIFYING):
             #    time.sleep(1)
@@ -84,7 +114,13 @@ class BurnerProgressWidget(QtGui.QWidget):
         self.thread.drive_removed()
     def setProgress(self,progress):
         print "setting progress"
+
         self.progress.setValue(progress)
+
+        if (progress == 100):
+          self.progress.setStyleSheet(COMPLETED_STYLE)
+        else:
+          self.progress.setStyleSheet(DEFAULT_STYLE)
     def setState(self, state):
         print "setting state"
         self.actionLabel.setText(state)
