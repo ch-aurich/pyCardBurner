@@ -39,6 +39,24 @@ class pyCardBurner(QtGui.QWidget):
         self.inputfile = inputfile
         self.initUI()
 
+    def closeEvent(self, event):
+        if self.none_busy():
+            self.stop_all()
+            event.accept()
+        else:
+            event.ignore()
+
+    def stop_all(self):
+        for burner in self.dev_list:
+            burner['burner'].stop()
+    
+    def none_busy(self):
+        none_busy = True
+        for burner in self.dev_list:
+            if burner['burner'].is_busy() == True:
+              none_busy = False
+        return none_busy
+    
     def udisks_device_changed(self, devPath, deviceName, deviceSize):
         if(deviceSize == 0):
             if (not self.dev_list[deviceName]['size'] == 0):
