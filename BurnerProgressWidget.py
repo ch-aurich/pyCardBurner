@@ -49,8 +49,8 @@ class BurnerProgressThread(QtCore.QThread):
         self.filesize = os.path.getsize(inputfile)
         self.flash_state = 1
     def is_busy(self):
-        if self.flash_state == FLASH_STATE_WAIT_FOR_INSERT or \
-           self.flash_state == FLASH_STATE_WAIT_FOR_REMOVAL:
+        if self.flash_state == self.FLASH_STATE_WAIT_FOR_INSERT or \
+           self.flash_state == self.FLASH_STATE_WAIT_FOR_REMOVAL:
             return False
         else:
             return True
@@ -117,7 +117,10 @@ class BurnerProgressWidget(QtGui.QWidget):
     def is_busy(self):
         return self.thread.is_busy()
     def stop(self):
-        self.thread.stop()
+        self.thread.exiting = True
+        #wait for thread to end
+        while(self.thread.isRunning()):
+            time.sleep(.1)
     def drive_inserted(self):
         self.thread.drive_inserted()
     def drive_removed(self):

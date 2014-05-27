@@ -41,18 +41,20 @@ class pyCardBurner(QtGui.QWidget):
 
     def closeEvent(self, event):
         if self.none_busy():
+            print "stopping all threads for exit"
             self.stop_all()
             event.accept()
         else:
+            print "ignoring users wish to close window, some card is not flashed yet"
             event.ignore()
 
     def stop_all(self):
-        for burner in self.dev_list:
+        for devicename, burner in self.dev_list.items():
             burner['burner'].stop()
     
     def none_busy(self):
         none_busy = True
-        for burner in self.dev_list:
+        for devicename, burner in self.dev_list.items():
             if burner['burner'].is_busy() == True:
               none_busy = False
         return none_busy
