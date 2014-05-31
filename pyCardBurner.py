@@ -22,10 +22,10 @@ class WaitWindow(QtGui.QWidget):
         self.list.insertItem(0, new_item)
 
     def initUI(self):
-        description = QtGui.QLabel("Plug in your SD cards \
-                      into the card readers now. Close this \
-                      window when you plugged in all cards. \
-                      Detected cards will be listed below:")
+        description = QtGui.QLabel("Plug in your SD cards" + \
+                      "into the card readers now. Close this" + \
+                      "window when you plugged in all cards." + \
+                      "Detected cards will be listed below:")
         self.setWindowTitle('waiting...')
         vbox = QtGui.QVBoxLayout()
         vbox.addWidget(description)
@@ -97,9 +97,28 @@ class CardBurner(QtGui.QWidget):
         self.setLayout(hbox)
 
 
+def getMassStorageDevices(bus):
+    dev_list = {}
+
+    for dev in ud_manager.EnumerateDevices():
+        device_obj = bus.get_object('org.freedesktop.UDisks', dev)
+        device_props = dbus.Interface(device_obj, dbus.PROPERTIES_IFACE)
+        deviceFile = str(device_props. \
+                         Get('org.freedesktop.UDisks.Device', 'DeviceFile'))
+        deviceSize = int(device_props. \
+                         Get('org.freedesktop.UDisks.Device', 'DeviceSize'))
+        deviceIsPartition = bool(device_props. \
+                                 Get('org.freedesktop.UDisks.Device', \
+                                     'DeviceIsPartition'))
+
+        if not deviceIsPartition and deviceSize == 0:
+            dev_list[deviceFile] = {'size': 0}
+
+    return dev_list
+
 def on_device_changed(dev_path):
     added_dev_obj = bus.get_object("org.freedesktop.UDisks", dev_path)
-    added_dev = dbus.Interface(added_dev_obj, 'org.freedesktop.UDisks')
+    #added_dev = dbus.Interface(added_dev_obj, 'org.freedesktop.UDisks')
     added_dev_props = dbus.Interface(added_dev_obj, dbus.PROPERTIES_IFACE)
     deviceFile = str(added_dev_props. \
                      Get('org.freedesktop.UDisks.Device', "DeviceFile"))
@@ -122,8 +141,8 @@ def on_device_changed(dev_path):
             pdb.udisks_device_changed(dev_path, deviceFile, deviceSize)
 
 
-raw_input("Connect all your card readers without SD cards inserted and \
-           press Enter to start the learning phase")
+raw_input("Connect all your card readers without SD cards inserted and" + \
+           "press Enter to start the learning phase")
 learningmode = True
 bus = dbus.SystemBus()
 ud_manager_obj = bus.get_object('org.freedesktop.UDisks', \
@@ -131,21 +150,7 @@ ud_manager_obj = bus.get_object('org.freedesktop.UDisks', \
 ud_manager = dbus.Interface(ud_manager_obj, 'org.freedesktop.UDisks')
 ud_manager.connect_to_signal('DeviceChanged', on_device_changed)
 
-dev_list = {}
-
-for dev in ud_manager.EnumerateDevices():
-    device_obj = bus.get_object('org.freedesktop.UDisks', dev)
-    device_props = dbus.Interface(device_obj, dbus.PROPERTIES_IFACE)
-    deviceFile = str(device_props. \
-                     Get('org.freedesktop.UDisks.Device', 'DeviceFile'))
-    deviceSize = int(device_props. \
-                     Get('org.freedesktop.UDisks.Device', 'DeviceSize'))
-    deviceIsPartition = bool(device_props. \
-                             Get('org.freedesktop.UDisks.Device', \
-                                 'DeviceIsPartition'))
-
-    if not deviceIsPartition and deviceSize == 0:
-        dev_list[deviceFile] = {'size': 0}
+dev_list = getMassStorageDevices(bus)
 
 app = QtGui.QApplication(sys.argv)
 waitwindow = WaitWindow()
