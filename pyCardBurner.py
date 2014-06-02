@@ -11,17 +11,30 @@ DBusGMainLoop(set_as_default=True)  #Inform that a main loop will be used
 
 
 class WaitWindow(QtGui.QWidget):
+    '''
+    Qt Window that shows which devices were recognized as card readers for the
+    burning process
+    '''
     def __init__(self):
+        '''
+        constructor that initializes the window
+        '''
         super(WaitWindow, self).__init__()
         self.list = QtGui.QListWidget()
         self.initUI()
 
     def addDevice(self, name):
+        '''
+        method to add a new device to the list of devices
+        '''
         new_item = QtGui.QListWidgetItem()
         new_item.setText(name)
         self.list.insertItem(0, new_item)
 
     def initUI(self):
+        '''
+        method to create all graphical objects and to initialize the window
+        '''
         description = QtGui.QLabel("Plug in your SD cards" + \
                       "into the card readers now. Close this" + \
                       "window when you plugged in all cards." + \
@@ -34,6 +47,10 @@ class WaitWindow(QtGui.QWidget):
 
 
 class CardBurner(QtGui.QWidget):
+    '''
+    Qt window that displays an instance of BurnerProgressWidget for each
+    device passed in the dev_list in the constructor
+    '''
     def __init__(self, imagefile, devices):
         ''' initializes the pyCardBurner object
         dev_list is the dictionary of device names to be used '''
