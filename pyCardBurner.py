@@ -115,6 +115,9 @@ class CardBurner(QtGui.QWidget):
 
 
 def getMassStorageDevices(bus):
+    '''
+    function that queries dbus udisks for available mass storage devices
+    '''
     dev_list = {}
 
     for dev in ud_manager.EnumerateDevices():
@@ -134,6 +137,9 @@ def getMassStorageDevices(bus):
     return dev_list
 
 def on_device_changed(dev_path):
+    '''
+    callback from dbus udisks when a device has changed
+    '''
     added_dev_obj = bus.get_object("org.freedesktop.UDisks", dev_path)
     #added_dev = dbus.Interface(added_dev_obj, 'org.freedesktop.UDisks')
     added_dev_props = dbus.Interface(added_dev_obj, dbus.PROPERTIES_IFACE)
@@ -146,15 +152,15 @@ def on_device_changed(dev_path):
                                  "DeviceIsPartition"))
 
     if learningmode == True:
-        if deviceFile in dev_list \
+        if deviceFile in device_list \
                 and not deviceIsPartition \
                 and int(deviceSize) > 0 \
-                and dev_list[deviceFile]['size'] == 0:
-            dev_list[deviceFile]['size'] = deviceSize
+                and device_list[deviceFile]['size'] == 0:
+            device_list[deviceFile]['size'] = deviceSize
             print("added " + deviceFile + " to the list of used devices")
             waitwindow.addDevice(deviceFile)
     else:
-        if deviceFile in dev_list and not deviceIsPartition:
+        if deviceFile in device_list and not deviceIsPartition:
             pdb.udisks_device_changed(dev_path, deviceFile, deviceSize)
 
 
@@ -167,7 +173,7 @@ ud_manager_obj = bus.get_object('org.freedesktop.UDisks', \
 ud_manager = dbus.Interface(ud_manager_obj, 'org.freedesktop.UDisks')
 ud_manager.connect_to_signal('DeviceChanged', on_device_changed)
 
-dev_list = getMassStorageDevices(bus)
+device_list = getMassStorageDevices(bus)
 
 app = QtGui.QApplication(sys.argv)
 waitwindow = WaitWindow()
@@ -176,12 +182,12 @@ app.exec_()
 
 learningmode = False
 
-for dev, val in dev_list.items():
+for dev, val in device_list.items():
     if val['size'] == 0:
-        dev_list.pop(dev)
+        device_list.pop(dev)
 
 inputfile = str(sys.argv[1])
 
-pdb = CardBurner(inputfile, dev_list)
+pdb = CardBurner(inputfile, device_list)
 pdb.show()
 sys.exit(app.exec_())
