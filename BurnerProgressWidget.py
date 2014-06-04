@@ -61,7 +61,7 @@ class BurnerProgressThread(QtCore.QThread):
         #TODO: error handling!, check preconditions
         self.flash_state = 0
     def run(self):
-        while self.exiting==False:
+        while self.exiting == False:
             #wait for card to be inserted
             if (self.flash_state == self.FLASH_STATE_WAIT_FOR_INSERT):
                 print("wait for insert")
@@ -104,7 +104,7 @@ class BurnerProgressThread(QtCore.QThread):
 
 
 class BurnerProgressWidget(QtGui.QWidget):
-    def __init__(self, deviceName,inputfile):
+    def __init__(self, deviceName, inputfile):
         QtGui.QWidget.__init__(self)
         self.initUI(deviceName)
         self.deviceName = deviceName
@@ -125,15 +125,15 @@ class BurnerProgressWidget(QtGui.QWidget):
         self.thread.drive_inserted()
     def drive_removed(self):
         self.thread.drive_removed()
-    def setProgress(self,progress):
+    def setProgress(self, progress):
         print "setting progress"
 
         self.progress.setValue(progress)
 
         if (progress == 100):
-          self.progress.setStyleSheet(COMPLETED_STYLE)
+            self.progress.setStyleSheet(COMPLETED_STYLE)
         else:
-          self.progress.setStyleSheet(DEFAULT_STYLE)
+            self.progress.setStyleSheet(DEFAULT_STYLE)
     def setState(self, state):
         print "setting state"
         self.actionLabel.setText(state)
@@ -145,8 +145,8 @@ class BurnerProgressWidget(QtGui.QWidget):
 
         progressLabel = QtGui.QLabel("Progress:")
         self.progress = QtGui.QProgressBar()
-        self.progress.setMinimum=0
-        self.progress.setMaximum=100
+        self.progress.setMinimum = 0
+        self.progress.setMaximum = 100
 
         frame = QtGui.QFrame()
         frame.setFrameStyle(QtGui.QFrame.Panel)
@@ -154,7 +154,7 @@ class BurnerProgressWidget(QtGui.QWidget):
 
         layout = QtGui.QGridLayout(self)
         layout.addWidget(deviceNameDescriptionLabel, 0, 0)
-        layout.addWidget(self.deviceNameLabel, 0,1)
+        layout.addWidget(self.deviceNameLabel, 0, 1)
         layout.addWidget(actionDescriptionLabel, 1, 0)
         layout.addWidget(self.actionLabel, 1, 1)
         layout.addWidget(progressLabel, 2, 0)
