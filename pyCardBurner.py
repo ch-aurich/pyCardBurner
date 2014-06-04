@@ -54,6 +54,7 @@ class CardBurner(QtGui.QWidget):
         ''' initializes the pyCardBurner object
         dev_list is the dictionary of device names to be used '''
         super(CardBurner, self).__init__()
+        self.burners = []
         self.dev_list = devices
         self.inputfile = imagefile
         self.initUI()
@@ -82,7 +83,7 @@ class CardBurner(QtGui.QWidget):
                 none_busy = False
         return none_busy
 
-    def udisks_device_changed(self, devPath, deviceName, deviceSize):
+    def udisks_device_changed(self, _, deviceName, deviceSize):
         ''' event (used as callback from udisks) to signalize
         the change of device properties '''
         if deviceSize == 0:
@@ -96,7 +97,6 @@ class CardBurner(QtGui.QWidget):
 
     def initUI(self):
         ''' initialize the user interface '''
-        self.burners = []
         self.setWindowTitle('pyCardBurner')
 
         hbox = QtGui.QHBoxLayout()
