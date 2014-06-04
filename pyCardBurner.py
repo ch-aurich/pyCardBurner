@@ -1,13 +1,12 @@
 ''' tool to mass flash SD (or other) mass storage cards '''
 import dbus
-#import gobject
 from dbus.mainloop.glib import DBusGMainLoop
 from PySide import QtGui
 import sys
 
 import BurnerProgressWidget
 
-DBusGMainLoop(set_as_default=True)  #Inform that a main loop will be used
+DBusGMainLoop(set_as_default=True)  #Inform DBus that a main loop will be used
 
 
 class WaitWindow(QtGui.QWidget):
@@ -72,13 +71,13 @@ class CardBurner(QtGui.QWidget):
 
     def stop_all(self):
         ''' method to tell all burner widgets to  stop their work '''
-        for devicename, burner in self.dev_list.items():
+        for _ , burner in self.dev_list.items():
             burner['burner'].stop()
 
     def none_busy(self):
         ''' find out if all burners are idle '''
         none_busy = True
-        for devicename, burner in self.dev_list.items():
+        for _ , burner in self.dev_list.items():
             if burner['burner'].is_busy() == True:
                 none_busy = False
         return none_busy
@@ -102,7 +101,7 @@ class CardBurner(QtGui.QWidget):
 
         hbox = QtGui.QHBoxLayout()
         index = 0
-        for deviceName, deviceproperties in self.dev_list.items():
+        for deviceName, _ in self.dev_list.items():
             self.burners. \
                 append(BurnerProgressWidget.BurnerProgressWidget \
                            (deviceName, self.inputfile))
@@ -120,8 +119,8 @@ def getMassStorageDevices(bus):
     '''
     dev_list = {}
 
-    for dev in ud_manager.EnumerateDevices():
-        device_obj = bus.get_object('org.freedesktop.UDisks', dev)
+    for udisks_device in ud_manager.EnumerateDevices():
+        device_obj = bus.get_object('org.freedesktop.UDisks', udisks_device)
         device_props = dbus.Interface(device_obj, dbus.PROPERTIES_IFACE)
         deviceFile = str(device_props. \
                          Get('org.freedesktop.UDisks.Device', 'DeviceFile'))
@@ -140,7 +139,8 @@ def on_device_changed(dev_path):
     '''
     callback from dbus udisks when a device has changed
     '''
-    added_dev_obj = bus.get_object("org.freedesktop.UDisks", dev_path)
+    added_dev_obj = dbus_systembus.get_object("org.freedesktop.UDisks", \
+                                              dev_path)
     #added_dev = dbus.Interface(added_dev_obj, 'org.freedesktop.UDisks')
     added_dev_props = dbus.Interface(added_dev_obj, dbus.PROPERTIES_IFACE)
     deviceFile = str(added_dev_props. \
@@ -167,13 +167,13 @@ def on_device_changed(dev_path):
 raw_input("Connect all your card readers without SD cards inserted and" + \
            "press Enter to start the learning phase")
 learningmode = True
-bus = dbus.SystemBus()
-ud_manager_obj = bus.get_object('org.freedesktop.UDisks', \
+dbus_systembus = dbus.SystemBus()
+ud_manager_obj = dbus_systembus.get_object('org.freedesktop.UDisks', \
                                 '/org/freedesktop/UDisks')
 ud_manager = dbus.Interface(ud_manager_obj, 'org.freedesktop.UDisks')
 ud_manager.connect_to_signal('DeviceChanged', on_device_changed)
 
-device_list = getMassStorageDevices(bus)
+device_list = getMassStorageDevices(dbus_systembus)
 
 app = QtGui.QApplication(sys.argv)
 waitwindow = WaitWindow()
