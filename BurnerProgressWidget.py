@@ -111,8 +111,15 @@ class BurnerProgressThread(QtCore.QThread):
 
 
 class BurnerProgressWidget(QtGui.QWidget):
+    ''' Qt (PySide) Widget that can be used to flash SD cards with a progressbar '''
     def __init__(self, deviceName, inputfile):
+        ''' initialization of the widget '''
         QtGui.QWidget.__init__(self)
+
+        self.actionLabel = None
+        self.progress = None
+        self.deviceNameLabel = None
+
         self.initUI(deviceName)
         self.deviceName = deviceName
         self.inputfile = inputfile
@@ -122,17 +129,22 @@ class BurnerProgressWidget(QtGui.QWidget):
         self.thread.state.connect(self.setState, QtCore.Qt.QueuedConnection)
         self.thread.start()
     def is_busy(self):
+        ''' request if the burner process is in progress or in a wait state '''
         return self.thread.is_busy()
     def stop(self):
+        ''' marks the thread to stop whenever it reaches the next wait state and waits for the thread to finish'''
         self.thread.exiting = True
         #wait for thread to end
         while(self.thread.isRunning()):
             time.sleep(.1)
     def drive_inserted(self):
+        ''' notify the widget that a card has been inserted into the drive '''
         self.thread.drive_inserted()
     def drive_removed(self):
+        ''' notify the widget that a card has been removed from the drive '''
         self.thread.drive_removed()
     def setProgress(self, progress):
+        ''' slot to set the progress of the widget - i.e. what is the displayed progress of the progressbar'''
         print "setting progress"
 
         self.progress.setValue(progress)
@@ -142,9 +154,11 @@ class BurnerProgressWidget(QtGui.QWidget):
         else:
             self.progress.setStyleSheet(DEFAULT_STYLE)
     def setState(self, state):
+        ''' slot to set the description of the current state '''
         print "setting state"
         self.actionLabel.setText(state)
     def initUI(self, deviceName):
+        ''' method to initialize the user interface '''
         deviceNameDescriptionLabel = QtGui.QLabel("Device:")
         self.deviceNameLabel = QtGui.QLabel(deviceName)
         actionDescriptionLabel = QtGui.QLabel("Action:")
