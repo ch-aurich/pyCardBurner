@@ -67,7 +67,10 @@ class BurnerProgressThread(QtCore.QThread):
         #TODO: error handling!, check preconditions
         self.flash_state = 0
     def run(self):
-        ''' endless running function with state machine for handling the flash process '''
+        ''' 
+        endless running function with state machine for handling the flash 
+        process
+        '''
         while self.exiting == False:
             #wait for card to be inserted
             if (self.flash_state == self.FLASH_STATE_WAIT_FOR_INSERT):
@@ -79,7 +82,10 @@ class BurnerProgressThread(QtCore.QThread):
                 self.state.emit("flashing...")
                 english_env = dict(os.environ)
                 english_env['LANG'] = "LANG=en_US.UTF-8"
-                dd_process = Popen(['dd', 'of=' + self.deviceName, 'bs=1M', 'oflag=direct', 'if=' + self.inputfile], stderr=PIPE, env=english_env)
+                dd_process = Popen(['dd', 'of=' + self.deviceName, \
+                                    'bs=1M', 'oflag=direct', \
+                                    'if=' + self.inputfile], \
+                                    stderr=PIPE, env=english_env)
                 while dd_process.poll() is None:
                     print self.deviceName + ": wait for dd end"
                     time.sleep(1)
@@ -88,13 +94,18 @@ class BurnerProgressThread(QtCore.QThread):
                     print self.deviceName + ": sent signal SIGUSR1 to dd"
                     while 1:
                         time.sleep(.1)
-                        print self.deviceName + ": in endless loop for reading stderr"
+                        print self.deviceName + \
+                               ": in endless loop for reading stderr"
                         dd_line = dd_process.stderr.readline()
                         print self.deviceName + dd_line
                         if 'bytes' in dd_line:
                             bytes_copied = dd_line.split(' ')[0]
-                            print self.deviceName + ": " + str(bytes_copied) + " of " + str(self.filesize) + " bytes copied so far"
-                            self.dataReady.emit(99*int(bytes_copied)/self.filesize) #this will reach 99% as maximum
+                            print self.deviceName + ": " + str(bytes_copied) +\
+                                   " of " + str(self.filesize) + \
+                                   " bytes copied so far"
+                            #the following calculation will reach 99% as maximum
+                            self.dataReady.emit(99*int(bytes_copied) \
+                                                / self.filesize)
                             break
                 
                 #switch to next state
@@ -111,7 +122,9 @@ class BurnerProgressThread(QtCore.QThread):
 
 
 class BurnerProgressWidget(QtGui.QWidget):
-    ''' Qt (PySide) Widget that can be used to flash SD cards with a progressbar '''
+    '''
+    Qt (PySide) Widget that can be used to flash SD cards with a progressbar
+    '''
     def __init__(self, deviceName, inputfile):
         ''' initialization of the widget '''
         QtGui.QWidget.__init__(self)
@@ -125,14 +138,18 @@ class BurnerProgressWidget(QtGui.QWidget):
         self.inputfile = inputfile
 
         self.thread = BurnerProgressThread(self.deviceName, self.inputfile)
-        self.thread.dataReady.connect(self.setProgress, QtCore.Qt.QueuedConnection)
+        self.thread.dataReady.connect(self.setProgress, \
+                                      QtCore.Qt.QueuedConnection)
         self.thread.state.connect(self.setState, QtCore.Qt.QueuedConnection)
         self.thread.start()
     def is_busy(self):
         ''' request if the burner process is in progress or in a wait state '''
         return self.thread.is_busy()
     def stop(self):
-        ''' marks the thread to stop whenever it reaches the next wait state and waits for the thread to finish'''
+        ''' 
+        marks the thread to stop whenever it reaches the next wait 
+        state and waits for the thread to finish
+        '''
         self.thread.exiting = True
         #wait for thread to end
         while(self.thread.isRunning()):
@@ -144,7 +161,10 @@ class BurnerProgressWidget(QtGui.QWidget):
         ''' notify the widget that a card has been removed from the drive '''
         self.thread.drive_removed()
     def setProgress(self, progress):
-        ''' slot to set the progress of the widget - i.e. what is the displayed progress of the progressbar'''
+        '''
+        slot to set the progress of the widget - i.e. what is the displayed 
+        progress of the progressbar
+        '''
         print "setting progress"
 
         self.progress.setValue(progress)
