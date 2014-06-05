@@ -36,6 +36,7 @@ QProgressBar::chunk {
 
 
 class BurnerProgressThread(QtCore.QThread):
+    ''' Qt Thread that handles the actual work to write to the driver '''
     FLASH_STATE_WAIT_FOR_INSERT = 0
     FLASH_STATE_FLASHING = 1
     FLASH_STATE_VERIFYING = 2
@@ -43,6 +44,7 @@ class BurnerProgressThread(QtCore.QThread):
     dataReady = QtCore.Signal(int)
     state     = QtCore.Signal(str)
     def __init__(self, deviceName, inputfile):
+        ''' initialization of the thread '''
         QtCore.QThread.__init__(self)
         self.exiting = False
         self.deviceName = deviceName
@@ -50,18 +52,22 @@ class BurnerProgressThread(QtCore.QThread):
         self.filesize = os.path.getsize(inputfile)
         self.flash_state = 1
     def is_busy(self):
+        ''' request if the burner process is in progress or in a wait state '''
         if self.flash_state == self.FLASH_STATE_WAIT_FOR_INSERT or \
            self.flash_state == self.FLASH_STATE_WAIT_FOR_REMOVAL:
             return False
         else:
             return True
     def drive_inserted(self):
+        ''' notify thread that a card has been inserted into the drive '''
         #TODO: error handling!, check preconditions
         self.flash_state = 1
     def drive_removed(self):
+        ''' notify thread that a card has been removed from the drive '''
         #TODO: error handling!, check preconditions
         self.flash_state = 0
     def run(self):
+        ''' endless running function with state machine for handling the flash process '''
         while self.exiting == False:
             #wait for card to be inserted
             if (self.flash_state == self.FLASH_STATE_WAIT_FOR_INSERT):
