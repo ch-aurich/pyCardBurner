@@ -1,3 +1,4 @@
+''' Qt (PySide) Widget that can be used to flash SD cards with a progressbar '''
 from PySide import QtGui
 from PySide import QtCore
 import time
