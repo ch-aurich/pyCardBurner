@@ -79,17 +79,17 @@ class BurnerProgressThread(QtCore.QThread):
                 self.state.emit("flashing...")
                 english_env = dict(os.environ)
                 english_env['LANG'] = "LANG=en_US.UTF-8"
-                dd = Popen(['dd', 'of=' + self.deviceName, 'bs=1M', 'oflag=direct', 'if=' + self.inputfile], stderr=PIPE, env=english_env)
-                while dd.poll() is None:
+                dd_process = Popen(['dd', 'of=' + self.deviceName, 'bs=1M', 'oflag=direct', 'if=' + self.inputfile], stderr=PIPE, env=english_env)
+                while dd_process.poll() is None:
                     print self.deviceName + ": wait for dd end"
                     time.sleep(1)
                     print self.deviceName + ": wait for dd end"
-                    dd.send_signal(signal.SIGUSR1)
+                    dd_process.send_signal(signal.SIGUSR1)
                     print self.deviceName + ": sent signal SIGUSR1 to dd"
                     while 1:
                         time.sleep(.1)
                         print self.deviceName + ": in endless loop for reading stderr"
-                        l = dd.stderr.readline()
+                        l = dd_process.stderr.readline()
                         print self.deviceName + l
                         if 'bytes' in l:
                             bytes_copied = l.split(' ')[0]
