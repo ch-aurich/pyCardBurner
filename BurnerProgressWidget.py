@@ -89,10 +89,10 @@ class BurnerProgressThread(QtCore.QThread):
                     while 1:
                         time.sleep(.1)
                         print self.deviceName + ": in endless loop for reading stderr"
-                        l = dd_process.stderr.readline()
-                        print self.deviceName + l
-                        if 'bytes' in l:
-                            bytes_copied = l.split(' ')[0]
+                        dd_line = dd_process.stderr.readline()
+                        print self.deviceName + dd_line
+                        if 'bytes' in dd_line:
+                            bytes_copied = dd_line.split(' ')[0]
                             print self.deviceName + ": " + str(bytes_copied) + " of " + str(self.filesize) + " bytes copied so far"
                             self.dataReady.emit(99*int(bytes_copied)/self.filesize) #this will reach 99% as maximum
                             break
