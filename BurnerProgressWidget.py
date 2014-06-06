@@ -39,7 +39,6 @@ class BurnerProgressThread(QtCore.QThread):
     ''' Qt Thread that handles the actual work to write to the driver '''
     FLASH_STATE_WAIT_FOR_INSERT = 0
     FLASH_STATE_FLASHING = 1
-    FLASH_STATE_VERIFYING = 2
     FLASH_STATE_WAIT_FOR_REMOVAL = 3
     dataReady = QtCore.Signal(int)
     state     = QtCore.Signal(str)
@@ -107,15 +106,8 @@ class BurnerProgressThread(QtCore.QThread):
                             self.dataReady.emit(99*int(bytes_copied) \
                                                 / self.filesize)
                             break
-                
-                #switch to next state
-                #self.flash_state = self.FLASH_STATE_VERIFYING
                 self.dataReady.emit(100)
                 self.flash_state = self.FLASH_STATE_WAIT_FOR_REMOVAL
-            #elif (self.flash_state == self.FLASH_STATE_VERIFYING):
-            #    time.sleep(1)
-            #    self.dataReady.emit(60)
-            #    self.flash_state = self.FLASH_STATE_WAIT_FOR_REMOVAL
             elif (self.flash_state == self.FLASH_STATE_WAIT_FOR_REMOVAL):
                 self.state.emit("wait for card removal")
                 time.sleep(1)
